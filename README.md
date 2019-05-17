@@ -2,6 +2,10 @@
 
 通过rtsp协议拉取前端摄像头码流，通过opencv进行AI处理（如人脸检测），重新生成视频数据，并进行rtsp服务转发，用于后端设备（如视频录像机）或其他客户端拉流。
 
+详细说明见我的笔记  
+http://note.youdao.com/noteshare?id=53d7f3cf891fa7870e23879f4fc17cca
+
+
 # 环境安装
 1. 安装opencv
 ```
