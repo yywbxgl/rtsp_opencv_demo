@@ -10,9 +10,6 @@ import time
 live_url = "rtsp://admin:admin123@172.16.1.29/cam/realmonitor?channel=1&subtype=0"
 record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=2019_05_27_17_05_00&endtime=2019_05_27_17_06_00"
 
-threadLock = threading.Lock()
-queue = Queue()
-
 class GetPicture(threading.Thread):
 
 	def __init__(self, queue):
@@ -26,9 +23,6 @@ class GetPicture(threading.Thread):
 			print (self.capture.get(cv2.CAP_PROP_FPS))
 			print (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 			print (self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-		self.face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-		# self.eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 
 
 	def run(self):
@@ -91,7 +85,10 @@ class ShowPicture(threading.Thread):
 		self.stop_flag = True
 		cv2.destroyAllWindows()
 
+
 if __name__ == "__main__":
+
+	queue = Queue()
 
 	producer = GetPicture(queue)
 	consumer = ShowPicture(queue)
