@@ -8,14 +8,14 @@ from Queue import Queue
 import time
 
 live_url = "rtsp://admin:admin123@172.16.1.29/cam/realmonitor?channel=1&subtype=0"
-record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=2019_05_27_17_05_00&endtime=2019_05_27_17_06_00"
+record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=2019_05_27_17_06_00&endtime=2019_05_27_17_08_00"
 
 class GetPicture(threading.Thread):
 
 	def __init__(self, queue):
 		threading.Thread.__init__(self, name = "GetPicture")
 		self.frame_queue = queue
-		self.capture = cv2.VideoCapture(live_url)
+		self.capture = cv2.VideoCapture(record_url)
 		self.stop_flag = False
 
 		# 打印视频相关参数，帧率，宽高
@@ -25,18 +25,16 @@ class GetPicture(threading.Thread):
 			print (self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 
-	def run(self):
-			
-		while 1:
+	def run(self):	
+		while self.capture.isOpened():
 			# Capture frame-by-frame
 			ret, frame = self.capture.read()
 			# cv2.imshow('image_ori', frame)
-
-			self.frame_queue.put(frame)
-			print("---- put frame.")
+			if frame is not None:
+				self.frame_queue.put(frame)
+				print("---- put frame.")
 
 		self.capture.release()
-		cv2.destroyAllWindows()
 
 			
 	def stop(self):
@@ -55,11 +53,12 @@ class ShowPicture(threading.Thread):
 
 
 	def run(self):
-		
+		frame_num = 0
 		while 1:
 			# get接口默认为阻塞接口，会一直等待数据
 			frame = self.frame_queue.get()
-			print("get frame. left %d"% (self.frame_queue.qsize()))
+			frame_num = frame_num + 1
+			print("get frame %d. left %d"% (frame_num, self.frame_queue.qsize()))
 			
 			# opencv读取的图片格式为bgr24 转为灰度图
 			frame_temp = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -68,6 +67,7 @@ class ShowPicture(threading.Thread):
 
 			# 获取该图片中的各个人脸的坐标,画框
 			faces = self.face_cascade.detectMultiScale(frame_temp, 1.3, 5)
+			# print(faces)
 			for (x, y, w, h) in faces:
 				frame = cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 				roi_gray = frame[y:y + h, x:x + w]
