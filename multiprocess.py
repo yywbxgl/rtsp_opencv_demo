@@ -3,7 +3,7 @@
 import numpy as np
 import cv2
 import sys
-import threading
+import threading, thread
 from Queue import Queue
 import time
 
@@ -11,24 +11,33 @@ LIVE_URL = "rtsp://admin:admin123@172.16.1.29/cam/realmonitor?channel=1&subtype=
 RECORD_URL = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=2019_05_27_17_06_00&endtime=2019_05_27_17_08_00"
 
 SEGMENT_TIME = 60  #切片间隔，单位秒
+FPS = 15  #帧率，可以从码流中获取
 
-class GetRecord(threading.Thread):
+FILE_PATH = "data/"
 
-	def __init__(self, queue, start_time, end_time):
+class DealRecord(threading.Thread):
+
+	def __init__(self, start_time, end_time):
 		threading.Thread.__init__(self, name = "GetPicture")
-		self.frame_queue = queue
 		self.start_time = start_time
+		self.end_time = end_time
+		self.stop_flag = False
+		self.face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+		self.frame_queue = Queue()
 		record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=" + start_time + "&endtime=" + end_time
 		self.capture = cv2.VideoCapture(record_url)
 
+	def run(self):
 		# 打印视频相关参数，帧率，宽高
 		if self.capture.isOpened():
 			print (self.capture.get(cv2.CAP_PROP_FPS))
 			print (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 			print (self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+		
+		thread.start_new_thread(self.getRecord, ())
+		self.dealRecord()
 
-
-	def run(self):	
+	def getRecord(self):
 		while self.capture.isOpened():
 			# Capture frame-by-frame
 			ret, frame = self.capture.read()
@@ -38,34 +47,26 @@ class GetRecord(threading.Thread):
 				break
 			else:
 				self.frame_queue.put(frame)
-				print("---- put frame.")
+				# print("---- put frame.")
 
 		print("---- get record finish.")
 		self.capture.release()
 
-
-class ShowPicture(threading.Thread):
-
-	def __init__(self, queue, file_name):
-		threading.Thread.__init__(self, name = "ShowPicture")
-		self.frame_queue = queue
-		self.face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-		self.stop_flag = False
-		self.file_name = file_name
-
-
-	def run(self):
+	def dealRecord(self):
 		frame_num = 0
-		txt = open(self.file_name, "w")
+		file_name = "data/" + self.start_time + "_to_" + self.end_time + ".txt"
+		txt = open(file_name, "w")
 
 		while 1:
 			# get接口默认为阻塞接口，会一直等待数据
 			frame = self.frame_queue.get()
+
 			if frame == "fileover":
 				break
 
 			frame_num = frame_num + 1
-			print("get frame %d. left %d"% (frame_num, self.frame_queue.qsize()))
+			if (frame_num % FPS == 0) or (self.frame_queue.qsize() != 0):
+				print("get frame %d. left %d"% (frame_num, self.frame_queue.qsize()))
 			
 			# opencv读取的图片格式为bgr24 转为灰度图
 			frame_temp = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -80,11 +81,10 @@ class ShowPicture(threading.Thread):
 				roi_gray = frame[y:y + h, x:x + w]
 				roi_color = frame[y:y + h, x:x + w]
 
-			
 			content = str(frame_num) + ' ' + str(faces) + "\n"
 			txt.write(content)
 
-			cv2.imshow('image',frame)
+			# cv2.imshow('image',frame)
 
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
@@ -92,29 +92,20 @@ class ShowPicture(threading.Thread):
 		txt.flush()
 		txt.close()
 		cv2.destroyAllWindows()
-		print("---- deal record finish.")
-			
-
-	def stop(self):
-		self.stop_flag = True
-		cv2.destroyAllWindows()
+		print("---- deal record finish. total frame %d"%(frame_num))
 
 
 if __name__ == "__main__":
 
-	queue = Queue()
+	start_time = "2019_05_27_16_14_00"
+	end_time = "2019_05_27_16_15_00"
 
-	start_time = "2019_05_27_17_09_00"
-	end_time = "2019_05_27_17_10_00"
-	file_name = "data/" + start_time + "_to_" + end_time + ".txt"
+	test = DealRecord(start_time, end_time)
 
-	producer = GetRecord(queue, start_time, end_time)
-	consumer = ShowPicture(queue, file_name)
-
-	producer.start()
-	consumer.start()
-
-	producer.join()
-	consumer.join()
+	test.start()
+	test.join()
 
 	print("exit.")
+
+
+
