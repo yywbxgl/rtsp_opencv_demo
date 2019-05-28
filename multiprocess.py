@@ -12,6 +12,7 @@ RECORD_URL = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subty
 
 SEGMENT_TIME = 60  #切片间隔，单位秒
 FPS = 15  #帧率，可以从码流中获取
+PER_FILE_FRAME = SEGMENT_TIME * FPS
 
 FILE_PATH = "data/"
 
@@ -21,10 +22,13 @@ class DealRecord(threading.Thread):
 		threading.Thread.__init__(self, name = "GetPicture")
 		self.start_time = start_time
 		self.end_time = end_time
-		self.stop_flag = False
+		start_timeArray = time.strptime(self.start_time, "%Y_%m_%d_%H_%M_%S")
+		sart_timeStamp = time.mktime(start_timeArray)
+		self.time_stamp = sart_timeStamp
+
 		self.face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 		self.frame_queue = Queue()
-		record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=" + start_time + "&endtime=" + end_time
+		record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=" + self.start_time + "&endtime=" + self.end_time
 		self.capture = cv2.VideoCapture(record_url)
 
 	def run(self):
@@ -35,6 +39,7 @@ class DealRecord(threading.Thread):
 			print (self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 		
 		thread.start_new_thread(self.getRecord, ())
+
 		self.dealRecord()
 
 	def getRecord(self):
@@ -54,9 +59,7 @@ class DealRecord(threading.Thread):
 
 	def dealRecord(self):
 		frame_num = 0
-		file_name = "data/" + self.start_time + "_to_" + self.end_time + ".txt"
-		txt = open(file_name, "w")
-
+		data = []
 		while 1:
 			# get接口默认为阻塞接口，会一直等待数据
 			frame = self.frame_queue.get()
@@ -64,7 +67,7 @@ class DealRecord(threading.Thread):
 			if frame == "fileover":
 				break
 
-			frame_num = frame_num + 1
+			frame_num += 1
 			if (frame_num % FPS == 0) or (self.frame_queue.qsize() != 0):
 				print("get frame %d. left %d"% (frame_num, self.frame_queue.qsize()))
 			
@@ -82,23 +85,41 @@ class DealRecord(threading.Thread):
 				roi_color = frame[y:y + h, x:x + w]
 
 			content = str(frame_num) + ' ' + str(faces) + "\n"
-			txt.write(content)
+			data.append(content)
+
+			# 写入文件
+			if (len(data) == PER_FILE_FRAME):
+				self.writeFile(data)
+				data = []
 
 			# cv2.imshow('image',frame)
 
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
 
-		txt.flush()
-		txt.close()
 		cv2.destroyAllWindows()
 		print("---- deal record finish. total frame %d"%(frame_num))
 
 
+	def writeFile(self, data):
+		start_name = time.strftime("%Y%m%d_%H%M%S", time.localtime(self.time_stamp)) 
+		file_name = "data/" + start_name + ".txt"
+		txt = open(file_name, "w")
+		for line in data:
+			txt.write(line)
+		txt.flush()
+		txt.close()
+
+		print("save to file %s"%(file_name))
+		self.time_stamp += SEGMENT_TIME
+
+
+
+
 if __name__ == "__main__":
 
-	start_time = "2019_05_27_16_14_00"
-	end_time = "2019_05_27_16_15_00"
+	start_time = "2019_05_27_16_15_00"
+	end_time =  "2019_05_27_16_18_00"
 
 	test = DealRecord(start_time, end_time)
 
