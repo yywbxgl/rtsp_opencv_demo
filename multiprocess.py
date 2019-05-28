@@ -7,16 +7,19 @@ import threading
 from Queue import Queue
 import time
 
-live_url = "rtsp://admin:admin123@172.16.1.29/cam/realmonitor?channel=1&subtype=0"
-record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=2019_05_27_17_06_00&endtime=2019_05_27_17_08_00"
+LIVE_URL = "rtsp://admin:admin123@172.16.1.29/cam/realmonitor?channel=1&subtype=0"
+RECORD_URL = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=2019_05_27_17_06_00&endtime=2019_05_27_17_08_00"
 
-class GetPicture(threading.Thread):
+SEGMENT_TIME = 60  #切片间隔，单位秒
 
-	def __init__(self, queue):
+class GetRecord(threading.Thread):
+
+	def __init__(self, queue, start_time, end_time):
 		threading.Thread.__init__(self, name = "GetPicture")
 		self.frame_queue = queue
+		self.start_time = start_time
+		record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=" + start_time + "&endtime=" + end_time
 		self.capture = cv2.VideoCapture(record_url)
-		self.stop_flag = False
 
 		# 打印视频相关参数，帧率，宽高
 		if self.capture.isOpened():
@@ -30,33 +33,37 @@ class GetPicture(threading.Thread):
 			# Capture frame-by-frame
 			ret, frame = self.capture.read()
 			# cv2.imshow('image_ori', frame)
-			if frame is not None:
+			if frame is None:
+				self.frame_queue.put("fileover")
+				break
+			else:
 				self.frame_queue.put(frame)
 				print("---- put frame.")
 
+		print("---- get record finish.")
 		self.capture.release()
 
-			
-	def stop(self):
-		self.stop_flag = True
-		self.capture.release()
-		
 
 class ShowPicture(threading.Thread):
 
-	def __init__(self, queue):
+	def __init__(self, queue, file_name):
 		threading.Thread.__init__(self, name = "ShowPicture")
 		self.frame_queue = queue
 		self.face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-		# self.eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 		self.stop_flag = False
+		self.file_name = file_name
 
 
 	def run(self):
 		frame_num = 0
+		txt = open(self.file_name, "w")
+
 		while 1:
 			# get接口默认为阻塞接口，会一直等待数据
 			frame = self.frame_queue.get()
+			if frame == "fileover":
+				break
+
 			frame_num = frame_num + 1
 			print("get frame %d. left %d"% (frame_num, self.frame_queue.qsize()))
 			
@@ -73,12 +80,19 @@ class ShowPicture(threading.Thread):
 				roi_gray = frame[y:y + h, x:x + w]
 				roi_color = frame[y:y + h, x:x + w]
 
+			
+			content = str(frame_num) + ' ' + str(faces) + "\n"
+			txt.write(content)
+
 			cv2.imshow('image',frame)
 
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
 
+		txt.flush()
+		txt.close()
 		cv2.destroyAllWindows()
+		print("---- deal record finish.")
 			
 
 	def stop(self):
@@ -90,8 +104,12 @@ if __name__ == "__main__":
 
 	queue = Queue()
 
-	producer = GetPicture(queue)
-	consumer = ShowPicture(queue)
+	start_time = "2019_05_27_17_09_00"
+	end_time = "2019_05_27_17_10_00"
+	file_name = "data/" + start_time + "_to_" + end_time + ".txt"
+
+	producer = GetRecord(queue, start_time, end_time)
+	consumer = ShowPicture(queue, file_name)
 
 	producer.start()
 	consumer.start()
@@ -99,4 +117,4 @@ if __name__ == "__main__":
 	producer.join()
 	consumer.join()
 
-	print("finished!")
+	print("exit.")
