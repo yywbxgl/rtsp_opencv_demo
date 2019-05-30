@@ -35,6 +35,7 @@ class playRecord(threading.Thread):
 		self.capture = cv2.VideoCapture(record_url)
 		print("get %s"%(record_url))
 
+
 	def run(self):
 		# 打印视频相关参数，帧率，宽高
 		if self.capture.isOpened():
@@ -75,6 +76,12 @@ class playRecord(threading.Thread):
 			for line in lines[:-1]:
 				d = json.loads(line)
 				self.ai_data_queue.put(d)
+				
+			# 第一个文件起始位置精确到秒数
+			if i == start_timeArray.tm_min:
+				drop_num = start_timeArray.tm_sec * FPS
+				for t in range(drop_num):
+					self.ai_data_queue.get()
 
 		print("---- get ai data finish.")
 

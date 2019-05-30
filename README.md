@@ -12,6 +12,10 @@
 ```
 # 参数为需要处理的录像时间段，分别为开始时间和结束时间
 python AIServerDemo.py  2019_05_27_17_30_00  2019_05_27_17_40_00
+
+# 打开HTTP服务器
+cd data
+python -m SimpleHTTPServer
 ```
 
 ## 客户端
