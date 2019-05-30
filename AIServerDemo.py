@@ -15,7 +15,8 @@ SEGMENT_TIME = 60  #切片间隔，单位秒
 FPS = 15  #帧率，可以从码流中获取
 PER_FILE_FRAME = SEGMENT_TIME * FPS
 
-FILE_PATH = "data/"
+DATA_FILE_PATH = "data/"
+SNAP_FILE_PATH = "snapshoot/"
 
 class DealRecord(threading.Thread):
 
@@ -64,6 +65,8 @@ class DealRecord(threading.Thread):
 	def dealRecord(self):
 		frame_num = 0
 		data = []
+		frame_to_save = None
+		frame_to_save_num = 0
 		while 1:
 			# get接口默认为阻塞接口，会一直等待数据
 			frame = self.frame_queue.get()
@@ -79,7 +82,6 @@ class DealRecord(threading.Thread):
 			frame_temp = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 			# 直方图均匀化(改善图像的对比度和亮度)
 			frame_temp = cv2.equalizeHist(frame_temp)	
-
 			# 获取该图片中的各个人脸的坐标,画框
 			faces = self.face_cascade.detectMultiScale(frame_temp, 1.3, 5)
 
@@ -88,6 +90,8 @@ class DealRecord(threading.Thread):
 
 			if '[' in str(faces):
 				content = str(faces.tolist()) + "\n"
+				frame_to_save = frame
+				frame_to_save_num = frame_num
 			else:
 				content = "[]" + '\n'
 
@@ -95,32 +99,43 @@ class DealRecord(threading.Thread):
 
 			# 写入文件
 			if (len(data) == PER_FILE_FRAME):
-				self.writeFile(data)
+				self.writeFile(data, frame_to_save, frame_to_save_num)
 				data = []
+				frame_to_save = None
 
 			cv2.imshow('image',frame)
 
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
 
-		self.writeFile(data)
+		if len(data) > 50:
+			self.writeFile(data,frame_to_save, frame_to_save_num)
+		
 		cv2.destroyAllWindows()
 		print("---- deal record finish. total frame %d"%(frame_num))
 
 
-	def writeFile(self, data):
-		start_name = time.strftime("%Y%m%d_%H%M%S", time.localtime(self.time_stamp)) 
-		file_name = FILE_PATH + start_name + ".txt"
+	def writeFile(self, data, frame_to_save, frame_num):
+		start_name = time.strftime("%Y%m%d_%H%M%S", time.localtime(self.time_stamp))
+		file_name = DATA_FILE_PATH + start_name + ".txt"
 		txt = open(file_name, "w")
 		for line in data:
 			txt.write(line)
 		txt.flush()
 		txt.close()
-
 		print("save to file %s"%(file_name))
+
+		if frame_to_save is not None:
+			start_name = time.strftime("%Y%m%d_%H%M", time.localtime(self.time_stamp))
+
+			sec = ((frame_num-1) % PER_FILE_FRAME) / FPS
+
+			print( "file_num=%d  sec=%d"%(frame_num, sec) )
+			file_name = "%s%s%02d.jpg"%(SNAP_FILE_PATH, start_name, sec)
+			cv2.imwrite(file_name, frame_to_save)
+			print("save to file %s"%(file_name))
+		
 		self.time_stamp += SEGMENT_TIME
-
-
 
 
 if __name__ == "__main__":
