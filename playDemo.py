@@ -87,12 +87,10 @@ class playRecord():
 				drop_num = self.start_timeArray.tm_sec * FPS
 				if drop_num >= self.ai_data_queue.qsize():
 					drop_num = self.ai_data_queue.qsize()
-					print("---------------------")
 				for t in range(drop_num):
 					self.ai_data_queue.get()
 
 				print("droped ", drop_num)
-
 
 			timetemp += 60
 
