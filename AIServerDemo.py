@@ -18,10 +18,10 @@ PER_FILE_FRAME = SEGMENT_TIME * FPS
 DATA_FILE_PATH = "data/"
 SNAP_FILE_PATH = "snapshoot/"
 
-class DealRecord(threading.Thread):
+class DealRecord():
 
 	def __init__(self, start_time, end_time):
-		threading.Thread.__init__(self, name = "GetPicture")
+		# threading.Thread.__init__(self, name = "GetPicture")
 		self.start_time = start_time
 		self.end_time = end_time
 		start_timeArray = time.strptime(self.start_time, "%Y_%m_%d_%H_%M_%S")
@@ -30,9 +30,16 @@ class DealRecord(threading.Thread):
 
 		self.face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 		self.frame_queue = Queue()
-		record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=" + self.start_time + "&endtime=" + self.end_time
+
+		if '-' in self.end_time:
+			record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=" + self.start_time
+		else:
+			record_url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=" + self.start_time + "&endtime=" + self.end_time
+
 		self.capture = cv2.VideoCapture(record_url)
 		print("get %s"%(record_url))
+
+		self.stop_flag = False
 
 	def run(self):
 		# 打印视频相关参数，帧率，宽高
@@ -47,7 +54,7 @@ class DealRecord(threading.Thread):
 
 
 	def getRecord(self):
-		while self.capture.isOpened():
+		while self.capture.isOpened() and not self.stop_flag:
 			# Capture frame-by-frame
 			ret, frame = self.capture.read()
 			# cv2.imshow('image_ori', frame)
@@ -75,7 +82,8 @@ class DealRecord(threading.Thread):
 				break
 
 			frame_num += 1
-			if (frame_num % FPS == 0) or (self.frame_queue.qsize() != 0):
+			# if (frame_num % FPS == 0) or (self.frame_queue.qsize() != 0):
+			if (frame_num % (FPS*10) == 0):
 				print("get frame %d. left %d"% (frame_num, self.frame_queue.qsize()))
 			
 			# opencv读取的图片格式为bgr24 转为灰度图
@@ -90,32 +98,39 @@ class DealRecord(threading.Thread):
 
 			if '[' in str(faces):
 				content = str(faces.tolist()) + "\n"
-				frame_to_save = frame
-				frame_to_save_num = frame_num
+				# 最少间隔1秒保存一次
+				if (frame_num - frame_to_save_num > FPS) or (frame_to_save_num == 0):
+					frame_to_save = frame
+					frame_to_save_num = frame_num
 			else:
 				content = "[]" + '\n'
 
 			data.append(content)
+			
+			# 保存快照
+			if frame_to_save is not None:
+				self.savePicture(frame_to_save, frame_to_save_num)
+				frame_to_save = None
 
 			# 写入文件
 			if (len(data) == PER_FILE_FRAME):
-				self.writeFile(data, frame_to_save, frame_to_save_num)
+				self.saveData(data)
 				data = []
-				frame_to_save = None
 
-			cv2.imshow('image',frame)
+			# cv2.imshow('image',frame)
 
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
 
+		self.stop_flag = True
 		if len(data) > 50:
-			self.writeFile(data,frame_to_save, frame_to_save_num)
+			self.saveData(data)
 		
 		cv2.destroyAllWindows()
 		print("---- deal record finish. total frame %d"%(frame_num))
 
 
-	def writeFile(self, data, frame_to_save, frame_num):
+	def saveData(self, data):
 		start_name = time.strftime("%Y%m%d_%H%M%S", time.localtime(self.time_stamp))
 		file_name = DATA_FILE_PATH + start_name + ".txt"
 		txt = open(file_name, "w")
@@ -124,34 +139,42 @@ class DealRecord(threading.Thread):
 		txt.flush()
 		txt.close()
 		print("save to file %s"%(file_name))
-
-		if frame_to_save is not None:
-			start_name = time.strftime("%Y%m%d_%H%M", time.localtime(self.time_stamp))
-
-			sec = ((frame_num-1) % PER_FILE_FRAME) / FPS
-
-			print( "file_num=%d  sec=%d"%(frame_num, sec) )
-			file_name = "%s%s%02d.jpg"%(SNAP_FILE_PATH, start_name, sec)
-			cv2.imwrite(file_name, frame_to_save)
-			print("save to file %s"%(file_name))
 		
 		self.time_stamp += SEGMENT_TIME
 
+
+	def savePicture(self, frame_to_save, frame_num):
+		#文件名精确到秒
+		start_name = time.strftime("%Y%m%d_%H%M", time.localtime(self.time_stamp))
+		sec = ((frame_num-1) % PER_FILE_FRAME) / FPS
+		print( "file_num=%d  sec=%d"%(frame_num, sec) )
+		file_name = "%s%s%02d.jpg"%(SNAP_FILE_PATH, start_name, sec)
+		cv2.imwrite(file_name, frame_to_save)
+		print("save to file %s"%(file_name))
+		
 
 if __name__ == "__main__":
 
 	start_time = "2019_05_27_17_30_00"
 	end_time =  "2019_05_27_17_35_00"
 
+	if (len(sys.argv) == 2):
+		while 1:
+			timestamp = time.localtime(time.time() - 60)
+			timestamp_str = time.strftime("%Y_%m_%d_%H_%M", timestamp)
+			start_time_str = timestamp_str + '_00'
+			print(start_time_str)
+			test = DealRecord(start_time_str, '-1')
+			test.run()
+			time.sleep(0.1)
+
 	if (len(sys.argv) == 3):
 		start_time = sys.argv[1]
 		end_time = sys.argv[2]
 	
 	test = DealRecord(start_time, end_time)
-
-	test.start()
-	test.join()
-
+	test.run()
+	
 	print("exit.")
 
 
