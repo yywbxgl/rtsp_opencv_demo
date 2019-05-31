@@ -2,7 +2,6 @@
 
 ##plt 同时显示多幅图像
 import os
-import numpy as np
 from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
 import requests
@@ -14,6 +13,9 @@ import time
 FIGURE_X = 4
 FIGURE_Y = 4
 FIGURE_TOTAL = FIGURE_X * FIGURE_Y
+
+IMG_SIZE_W = int(1280*0.35)
+IMG_SIZE_H = int(720*0.35)
 # URL = "http://127.0.0.1:8001/"
 URL = "http://172.16.3.44:8001/"
 
@@ -99,7 +101,7 @@ class palyGUI():
         btn_list =[]
         for i in range(FIGURE_TOTAL):
             img = Image.open(self.pictures[i])
-            img = img.resize( (416,256), Image.ANTIALIAS)
+            img = img.resize( (IMG_SIZE_W,IMG_SIZE_H), Image.ANTIALIAS)
             bm = ImageTk.PhotoImage(img)
             button = tk.Button(frame_root, image=bm, text=self.pictures[i])
             button.image = bm
