@@ -13,6 +13,9 @@
 # 参数为需要处理的录像时间段，分别为开始时间和结束时间
 python AIServerDemo.py  2019_05_27_17_30_00  2019_05_27_17_40_00
 
+# 不断查询最新的录像进行处理
+python AIServerDemo.py live
+
 # 打开HTTP服务器
 cd data
 python -m SimpleHTTPServer
@@ -28,6 +31,9 @@ python -m SimpleHTTPServer
 
 运行命令
 ```
+# 客户端Demo，查询快照展示
+python playGUI
+
 # 参数为需要处理的录像时间段，分别为开始时间和结束时间
 python playDemo.py  2019_05_27_17_30_00  2019_05_27_17_35_00
 ```

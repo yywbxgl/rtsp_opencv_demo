@@ -26,9 +26,8 @@ class playRecord():
 		# threading.Thread.__init__(self, name = "GetPicture")
 		self.start_time = start_time
 		self.end_time = end_time
-		start_timeArray = time.strptime(self.start_time, "%Y_%m_%d_%H_%M_%S")
-		sart_timeStamp = time.mktime(start_timeArray)
-		self.time_stamp = sart_timeStamp
+		self.start_timeArray = time.strptime(self.start_time, "%Y_%m_%d_%H_%M_%S")
+		self.sart_timeStamp = time.mktime(self.start_timeArray)
 
 		self.face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 		self.frame_queue = Queue()
@@ -69,24 +68,36 @@ class playRecord():
 
 
 	def getAIData(self):
-		start_timeArray = time.strptime(self.start_time, "%Y_%m_%d_%H_%M_%S")
-		end_timeArray = time.strptime(self.end_time, "%Y_%m_%d_%H_%M_%S")
-		for i in range(start_timeArray.tm_min, end_timeArray.tm_min):
-			url = "%s%04d%02d%02d_%02d%02d00.txt"%(DATA_SERVER, start_timeArray.tm_year, start_timeArray.tm_mon, start_timeArray.tm_mday,start_timeArray.tm_hour, i) 
-			response = requests.get(url)
+
+		timetemp = self.sart_timeStamp
+		while not self.stop_flag:
+			txt_name = time.strftime("%Y%m%d_%H%M", time.localtime(timetemp))
+			txt_name = txt_name + '00.txt'
+			url = DATA_SERVER + txt_name
 			print("get url=%s"%(url))
+			response = requests.get(url)
 			lines = response.text.split('\n')
 						
 			for line in lines[:-1]:
 				d = json.loads(line)
 				self.ai_data_queue.put(d)
-				
+			
 			# 第一个文件起始位置精确到秒数
-			if i == start_timeArray.tm_min:
-				drop_num = start_timeArray.tm_sec * FPS
+			if timetemp == self.sart_timeStamp:
+				drop_num = self.start_timeArray.tm_sec * FPS
+				if drop_num >= self.ai_data_queue.qsize():
+					drop_num = self.ai_data_queue.qsize()
+					print("---------------------")
 				for t in range(drop_num):
 					self.ai_data_queue.get()
-			
+
+				print("droped ", drop_num)
+
+
+			timetemp += 60
+
+			pass
+		
 		print("---- get ai data finish.")
 
 
@@ -102,7 +113,7 @@ class playRecord():
 				break
 
 			frame_num += 1
-			if (frame_num % FPS == 0) or (self.frame_queue.qsize() != 0):
+			if (frame_num % (FPS*10) == 0):
 				print("get frame %d. left %d"% (frame_num, self.frame_queue.qsize()))
 			
 			if len(ai_data) != 0:
