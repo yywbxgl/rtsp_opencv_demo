@@ -18,7 +18,8 @@ PER_FILE_FRAME = SEGMENT_TIME * FPS
 
 FILE_PATH = "data/"
 
-DATA_SERVER = "http://172.16.3.44:8000/"
+# DATA_SERVER = "http://127.0.0.1:8000/"
+DATA_SERVER = "http://172.16.1.91:8000/"
 
 class playRecord():
 
@@ -55,13 +56,11 @@ class playRecord():
 		while self.capture.isOpened() and not self.stop_flag:
 			# Capture frame-by-frame
 			ret, frame = self.capture.read()
-			# cv2.imshow('image_ori', frame)
 			if frame is None:
 				self.frame_queue.put("fileover")
 				break
 			else:
 				self.frame_queue.put(frame)
-				# print("---- put frame.")
 
 		print("---- get record finish.")
 		self.capture.release()
@@ -76,26 +75,26 @@ class playRecord():
 			url = DATA_SERVER + txt_name
 			print("get url=%s"%(url))
 			response = requests.get(url)
+			print("response=%d"%(response.status_code))
+			if response.status_code != 200:
+				break
+			
 			lines = response.text.split('\n')
-						
-			for line in lines[:-1]:
+
+			# 第一个文件起始位置精确到秒数
+			drop_num = 0
+			if timetemp == self.sart_timeStamp:
+				drop_num = self.start_timeArray.tm_sec * FPS
+				if drop_num >= len(lines) -2:
+					drop_num = len(lines) -2
+				print("droped=%d"%(drop_num))
+
+			for line in lines[drop_num:-1]:
 				d = json.loads(line)
 				self.ai_data_queue.put(d)
 			
-			# 第一个文件起始位置精确到秒数
-			if timetemp == self.sart_timeStamp:
-				drop_num = self.start_timeArray.tm_sec * FPS
-				if drop_num >= self.ai_data_queue.qsize():
-					drop_num = self.ai_data_queue.qsize()
-				for t in range(drop_num):
-					self.ai_data_queue.get()
-
-				print("droped ", drop_num)
-
 			timetemp += 60
 
-			pass
-		
 		print("---- get ai data finish.")
 
 
@@ -114,6 +113,7 @@ class playRecord():
 			if (frame_num % (FPS*10) == 0):
 				print("get frame %d. left %d"% (frame_num, self.frame_queue.qsize()))
 			
+			# 只显示了一个人脸
 			if len(ai_data) != 0:
 				x = ai_data[0][0]
 				y = ai_data[0][1]

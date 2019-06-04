@@ -160,13 +160,12 @@ if __name__ == "__main__":
 
 	if (len(sys.argv) == 2):
 		while 1:
-			timestamp = time.localtime(time.time() - 60)
-			timestamp_str = time.strftime("%Y_%m_%d_%H_%M", timestamp)
-			start_time_str = timestamp_str + '_00'
-			print(start_time_str)
-			test = DealRecord(start_time_str, '-1')
+			timestamp = time.time()
+			start_time_str = time.strftime("%Y_%m_%d_%H_%M", time.localtime(timestamp - 60)) + "_00"
+			end_time_str = time.strftime("%Y_%m_%d_%H_%M", time.localtime(timestamp)) + "_00"
+			print("start=%s   end=%s"%(start_time_str, end_time_str))
+			test = DealRecord(start_time_str, end_time_str)
 			test.run()
-			time.sleep(0.1)
 
 	if (len(sys.argv) == 3):
 		start_time = sys.argv[1]
