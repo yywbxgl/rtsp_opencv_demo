@@ -74,10 +74,16 @@ class palyGUI():
         context = txt.split(".jpg")
         start_timeArray = time.strptime(context[0], "%Y%m%d_%H%M%S")
         start_timeStamp = time.mktime(start_timeArray)
-        start_time = start_timeStamp - 10
-        end_time = start_timeStamp + 180
+        start_time = int((start_timeStamp -1) / 10) * 10
+        end_time = start_timeStamp + 100
         start_time_str = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime(start_time))
         end_time_str = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime(end_time))
+
+        # start_time = start_timeStamp -10
+        # end_time = start_timeStamp + 100
+        # start_time_str = time.strftime("%Y_%m_%d_%H_%M_00", time.localtime(start_time))
+        # end_time_str = time.strftime("%Y_%m_%d_%H_%M_00", time.localtime(end_time))
+
         # print(start_time_str)
         # print(end_time_str)
         player = playDemo.playRecord(start_time_str, end_time_str)
@@ -94,7 +100,7 @@ class palyGUI():
 
         # 获取屏幕的宽度和高度，并且在高度上考虑到底部的任务栏，为了是弹出的窗口在屏幕中间
         screenwidth = top.winfo_screenwidth()
-        screenheight = top.winfo_screenheight() - 100
+        screenheight = top.winfo_screenheight()
         # top.resizable(False, False) 
         
         frame_root = tk.LabelFrame(top)
