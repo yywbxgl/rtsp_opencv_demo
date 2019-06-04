@@ -6,6 +6,7 @@ import sys
 import threading, thread
 from Queue import Queue
 import time
+import hashlib
 
 LIVE_URL = "rtsp://admin:admin123@172.16.1.29/cam/realmonitor?channel=1&subtype=0"
 RECORD_URL = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=2019_05_27_17_06_00&endtime=2019_05_27_17_08_00"
@@ -66,6 +67,7 @@ class DealRecord(threading.Thread):
 			# get接口默认为阻塞接口，会一直等待数据
 			frame = self.frame_queue.get()
 			# cv2.imshow('record_raw', frame)
+			ha = hash(str(frame))
 
 			if frame == "fileover":
 				break
@@ -89,7 +91,8 @@ class DealRecord(threading.Thread):
 				roi_color = frame[y:y + h, x:x + w]
 
 			cv2.imshow('record_deal',frame)
-			txt.write(str(faces) + "\n")
+			# txt.write(str(faces) + "\n")
+			txt.write(str(faces) + '  ' + str(ha) + "\n")
 
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
