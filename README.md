@@ -18,7 +18,7 @@ python AIServerDemo.py live
 
 # 打开HTTP服务器
 cd data
-python -m SimpleHTTPServer
+python -m SimpleHTTPServer 8000
 ```
 
 ## 客户端

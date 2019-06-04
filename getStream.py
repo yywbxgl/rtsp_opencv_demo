@@ -58,10 +58,14 @@ class DealRecord(threading.Thread):
 	def dealRecord(self):
 		frame_num = 0
 		data = []
+		
+		file_name = "form %s to %s.txt"%(self.start_time, self.end_time)
+		txt = open(file_name, "w")
+
 		while 1:
 			# get接口默认为阻塞接口，会一直等待数据
 			frame = self.frame_queue.get()
-			cv2.imshow('record_raw', frame)
+			# cv2.imshow('record_raw', frame)
 
 			if frame == "fileover":
 				break
@@ -85,10 +89,14 @@ class DealRecord(threading.Thread):
 				roi_color = frame[y:y + h, x:x + w]
 
 			cv2.imshow('record_deal',frame)
+			txt.write(str(faces) + "\n")
 
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
 
+		txt.flush()
+		txt.close()
+		print("save to file %s"%(file_name))
 		cv2.destroyAllWindows()
 		print("---- deal record finish. total frame %d"%(frame_num))
 
