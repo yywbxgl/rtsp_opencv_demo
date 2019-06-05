@@ -5,7 +5,7 @@ import os
 from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
 import requests
-import Tkinter as tk
+import tkinter as tk
 import playDemo
 import time
 
@@ -70,7 +70,6 @@ class palyGUI():
         plt.show()
 
     def button_click(self, txt):
-        print txt
         context = txt.split(".jpg")
         start_timeArray = time.strptime(context[0], "%Y%m%d_%H%M%S")
         start_timeStamp = time.mktime(start_timeArray)
@@ -113,8 +112,8 @@ class palyGUI():
             button.image = bm
             button.config(command = lambda t=self.pictures[i]:  self.button_click(t))
             btn_list.append(button)
-            x = i / FIGURE_X
-            y = i % FIGURE_Y
+            x = int(i / FIGURE_X)
+            y = int(i % FIGURE_Y)
             button.grid(row=x, column=y)
         
         frame_root.grid(row=0, column=0)

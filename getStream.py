@@ -3,8 +3,8 @@
 import numpy as np
 import cv2
 import sys
-import threading, thread
-from Queue import Queue
+import threading, _thread
+from queue import Queue
 import time
 import hashlib
 
@@ -36,7 +36,7 @@ class DealRecord(threading.Thread):
 			print (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 			print (self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 		
-		thread.start_new_thread(self.getRecord, ())
+		_thread.start_new_thread(self.getRecord, ())
 
 		self.dealRecord()
 
@@ -80,15 +80,12 @@ class DealRecord(threading.Thread):
 			frame_temp = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 			# 直方图均匀化(改善图像的对比度和亮度)
 			frame_temp = cv2.equalizeHist(frame_temp)	
-
 			# 获取该图片中的各个人脸的坐标,画框
 			faces = self.face_cascade.detectMultiScale(frame_temp, 1.3, 5)
 			# print(faces)
 
 			for (x, y, w, h) in faces:
 				frame = cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-				roi_gray = frame[y:y + h, x:x + w]
-				roi_color = frame[y:y + h, x:x + w]
 
 			cv2.imshow('record_deal',frame)
 			# txt.write(str(faces) + "\n")

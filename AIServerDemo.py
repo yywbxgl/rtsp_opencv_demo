@@ -3,8 +3,8 @@
 import numpy as np
 import cv2
 import sys
-import threading, thread
-from Queue import Queue
+import threading, _thread
+from queue import Queue
 import time
 import json
 
@@ -48,7 +48,7 @@ class DealRecord():
 			print (self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 			print (self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 		
-		thread.start_new_thread(self.getRecord, ())
+		_thread.start_new_thread(self.getRecord, ())
 
 		self.dealRecord()
 
