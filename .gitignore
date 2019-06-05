@@ -2,3 +2,4 @@ data/*
 snapshoot/*
 *.jpg
 *.pyc
+.vscode/*
