@@ -13,9 +13,9 @@ import os
 
 class MTCNN_Crop_Face(object):
     def __init__(self):
-        test_mode = "PNet"
-        thresh = [0.6, 0.7, 0.7]
-        min_face_size = 20
+        test_mode = "ONet"
+        thresh = [0.9, 0.7, 0.7]
+        min_face_size = 32
         stride = 2
         slide_window = False
         shuffle = False
@@ -90,7 +90,7 @@ def main():
         cropped_list = MCF.cropface(image)
 
         for bbox in cropped_list:
-            cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 0, 255))
+            cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 0, 255), 2)
 
         cv2.imwrite("./data/test_result/%d.png" % (count), image)
         cv2.imshow("image", image)
