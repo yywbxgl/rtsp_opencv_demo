@@ -20,12 +20,14 @@ from train_models.mtcnn_model import P_Net, R_Net, O_Net
 LIVE_URL = "rtsp://admin:admin123@172.16.1.29/cam/realmonitor?channel=1&subtype=0"
 RECORD_URL = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=2019_05_27_17_06_00&endtime=2019_05_27_17_08_00"
 
+# import os
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 class MTCNN_Crop_Face(object):
     def __init__(self):
-        test_mode = "PNet"
-        thresh = [0.6, 0.7, 0.7]
-        min_face_size = 20
+        test_mode = "ONet"
+        thresh = [0.9, 0.7, 0.7]
+        min_face_size = 24
         stride = 2
         slide_window = False
         shuffle = False
@@ -95,7 +97,14 @@ class DealRecord(threading.Thread):
 		else:
 			url = "rtsp://admin:admin123@172.16.1.16:554/cam/playback?channel=1&subtype=0&starttime=" + self.start_time + "&endtime=" + self.end_time
 		self.capture = cv2.VideoCapture(url)
+		# self.capture = cv2.VideoCapture(0)
 		print("get %s"%(url))
+
+		# self.capture.set(cv2.CAP_PROP_FPS,10)
+		# fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+		# self.capture.set(cv2.CAP_PROP_FOURCC, fourcc)
+		# self.capture.set(cv2.CAP_PROP_FRAME_WIDTH,720)
+		# self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT,480)
 
 
 	def run(self):
@@ -119,7 +128,7 @@ class DealRecord(threading.Thread):
 				self.frame_queue.put("fileover")
 				break
 			else:
-				frame = cv2.resize(frame,(540,360))
+				frame = cv2.resize(frame,(864,576))
 				self.frame_queue.put(frame)
 				# print("---- put frame.")
 
@@ -151,7 +160,7 @@ class DealRecord(threading.Thread):
 			faces = self.MTC.cropface(frame)
 
 			for bbox in faces:
-				cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 0, 255))
+				cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 0, 255), 2)
 
 			cv2.imshow('record_deal',frame)
 			txt.write(str(faces) + "\n")
