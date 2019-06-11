@@ -81,13 +81,12 @@ class DealRecord(threading.Thread):
 				print("get frame %d. left %d"% (frame_num, self.frame_queue.qsize()))
 			
 			# 人脸检测
+			# faces = self.MTC.cropface(frame)
 			if frame_num % 2 == 1:
 				faces = self.MTC.cropface(frame)
 				last_face = faces
 			else:
 				faces = last_face
-
-			# faces = self.MTC.cropface(frame)
 
 			for bbox in faces:
 				cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 0, 255), 2)

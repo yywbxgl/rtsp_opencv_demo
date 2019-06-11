@@ -65,8 +65,8 @@ class MTCNN_Crop_Face(object):
         # cv2.imwrite("../data/test_result/%d.png" %(count),image)
         # cv2.imshow("image",frame)
         # cv2.waitKey(0)
-        return all_boxes
-        # return cropped_list
+        # return all_boxes
+        return cropped_list
 
 def main():
     gt_imdb = []

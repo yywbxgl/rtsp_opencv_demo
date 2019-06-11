@@ -115,11 +115,8 @@ class playRecord():
 			
 			# 只显示了一个人脸
 			if len(ai_data) != 0:
-				x = ai_data[0][0]
-				y = ai_data[0][1]
-				w = ai_data[0][2]
-				h = ai_data[0][3]
-				frame = cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+				for face in ai_data:
+					cv2.rectangle(frame, (int(face[0]), int(face[1])), (int(face[2]), int(face[3])), (0, 0, 255), 2)
 
 			cv2.imshow('image',frame)
 

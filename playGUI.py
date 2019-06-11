@@ -34,7 +34,7 @@ class palyGUI():
             return
         
         result = []
-        li = response.text.split("</a>\n")
+        li = response.text.split("</a>")
         num = len(li[1:-1])
         for line in li[num - FIGURE_TOTAL + 1:-1]:
             temp = line.split(">")
