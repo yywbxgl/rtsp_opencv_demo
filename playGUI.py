@@ -17,7 +17,8 @@ FIGURE_TOTAL = FIGURE_X * FIGURE_Y
 IMG_SIZE_W = int(1280*0.35)
 IMG_SIZE_H = int(720*0.35)
 # URL = "http://127.0.0.1:8001/"
-URL = "http://172.16.1.91:8001/"
+# URL = "http://172.16.1.91:8001/"
+URL = "http://172.16.1.19:8001/"
 
 
 class palyGUI():

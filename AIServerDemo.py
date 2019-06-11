@@ -19,6 +19,8 @@ PER_FILE_FRAME = SEGMENT_TIME * FPS
 DATA_FILE_PATH = "data/"
 SNAP_FILE_PATH = "snapshoot/"
 
+MTC = MTCNN_Crop_Face.MTCNN_Crop_Face()
+
 class DealRecord():
 
 	def __init__(self, start_time, end_time):
@@ -41,7 +43,6 @@ class DealRecord():
 		print("get %s"%(record_url))
 
 		self.stop_flag = False
-		self.MTC = MTCNN_Crop_Face.MTCNN_Crop_Face()
 
 	def run(self):
 		# 打印视频相关参数，帧率，宽高
@@ -93,7 +94,7 @@ class DealRecord():
 			# faces = self.MTC.cropface(frame)
 			# 隔帧检测
 			if frame_num % 2 == 1:
-				faces = self.MTC.cropface(frame)
+				faces = MTC.cropface(frame)
 				last_face = faces
 			else:
 				faces = last_face

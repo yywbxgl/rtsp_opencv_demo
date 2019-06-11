@@ -19,7 +19,8 @@ PER_FILE_FRAME = SEGMENT_TIME * FPS
 FILE_PATH = "data/"
 
 # DATA_SERVER = "http://127.0.0.1:8000/"
-DATA_SERVER = "http://172.16.1.91:8000/"
+# DATA_SERVER = "http://172.16.1.91:8000/"
+DATA_SERVER = "http://172.16.1.19:8000/"
 
 class playRecord():
 
