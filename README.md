@@ -1,4 +1,8 @@
-# video_stream_convert
+#  AIServer_for_video
+
+说明文档
+http://note.youdao.com/noteshare?id=155a48969e757ec398b97f198cb95c1f
+
 
 ## 服务端
 
