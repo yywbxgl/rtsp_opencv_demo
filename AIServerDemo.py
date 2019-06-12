@@ -104,8 +104,8 @@ class DealRecord():
 
 			content = str(faces) + "\n"
 			if (len(faces) != 0):
-				# 快照间隔至少5秒
-				if (frame_num - frame_to_save_num > FPS*5) or (frame_to_save_num == 0):
+				# 快照间隔至少10秒
+				if (frame_num - frame_to_save_num > FPS*10) or (frame_to_save_num == 0):
 					frame_to_save = frame
 					frame_to_save_num = frame_num
 

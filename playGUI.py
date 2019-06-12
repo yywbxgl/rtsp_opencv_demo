@@ -20,6 +20,7 @@ IMG_SIZE_H = int(720*0.35)
 # URL = "http://172.16.1.91:8001/"
 URL = "http://172.16.1.19:8001/"
 
+TEMP_PATH = "temp/"
 
 class palyGUI():
 
@@ -44,7 +45,7 @@ class palyGUI():
         
         for i in range(FIGURE_TOTAL):
             res = requests.get(URL + result[i])
-            open(result[i], 'wb').write(res.content)
+            open(TEMP_PATH + result[i], 'wb').write(res.content)
 
         return result
 
@@ -62,7 +63,7 @@ class palyGUI():
         self.pictures = self.get_snapshoot()
         print(self.pictures)
         for i in range(FIGURE_TOTAL):
-            img = Image.open(self.pictures[i])
+            img = Image.open(TEMP_PATH + self.pictures[i])
             plt.subplot(FIGURE_X,FIGURE_Y,i+1)
             plt.title(self.pictures[i])
             plt.imshow(img)
@@ -106,7 +107,7 @@ class palyGUI():
         frame_root = tk.LabelFrame(top)
         btn_list =[]
         for i in range(FIGURE_TOTAL):
-            img = Image.open(self.pictures[i])
+            img = Image.open(TEMP_PATH + self.pictures[i])
             img = img.resize( (IMG_SIZE_W,IMG_SIZE_H), Image.ANTIALIAS)
             bm = ImageTk.PhotoImage(img)
             button = tk.Button(frame_root, image=bm, text=self.pictures[i])
